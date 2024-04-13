@@ -1,5 +1,5 @@
 name: Setup Bats and Bats libraries
-description: A GitHub Action for installing Bats and Bats-libs(support, assert, detik, file)
+description: A GitHub Action for installing Bats and Bats-libs(support, assert, detik, file, mock)
 author: bats-core
 branding:
   color: yellow
@@ -81,6 +81,23 @@ inputs:
     description: "Bats-file: clean temp files"
     required: false
     default: true
+  # mock
+  mock-install:
+    description: "Bats-mock installation, default to true"
+    required: false
+    default: true
+  mock-version:
+    description: "Bats-mock version, default to latest"
+    required: false
+    default: "2.1.1"
+  mock-path:
+    description: "Bats-mock path, default to /usr/lib/bats-mock"
+    required: false
+    default: "/usr/lib/bats-mock"
+  mock-clean:
+    description: "Bats-mock: clean temp mocks"
+    required: false
+    default: true
 outputs:
   bats-installed:
     description: "True/False if bats has been installed"
@@ -97,6 +114,9 @@ outputs:
   file-installed:
     description: "True/False if bats-file has been installed"
     value: ${{ (steps.file-install.outputs.file-installed != '') }}
+  mock-installed:
+    description: "True/False if bats-mock has been installed"
+    value: ${{ (steps.mock-install.outputs.mock-installed != '') }}
 
 runs:
   using: composite
@@ -280,6 +300,36 @@ runs:
         # Cleanup bats-support if required
         [[ "${{ inputs.file-clean }}" = "true"  ]] && rm -rf ${TEMPDIR} || exit 0
 
+    - name: "Set cache for Bats-mock"
+      uses: actions/cache@v4
+      if: inputs.mock-install == 'true'
+      id: mock-cache
+      with:
+        path: ${{ inputs.mock-path }}
+        key: ${{ runner.os }}-bats-mock-${{ inputs.mock-version }}
+
+    - name: "Download and install Bats-mock"
+      if: inputs.mock-install == 'true' && steps.mock-cache.outputs.cache-hit != 'true'
+      id: mock-install
+      shell: bash
+      run: |
+        VERSION=${{ inputs.mock-version }}
+        DESTDIR=${{ inputs.mock-path }}
+        TEMPDIR="/tmp/bats-mock"
+        url="https://github.com/buildkite-plugins/bats-mock/archive/refs/tags/v${VERSION}.tar.gz"
+
+        mkdir -p ${TEMPDIR}
+        [[ "${DESTDIR}" == "$HOME"* ]] && CMD="" || CMD="sudo"
+        ${CMD} mkdir -p ${DESTDIR}/src/
+        curl -sL ${url} | tar xz -C ${TEMPDIR} --strip-components 1 && cd ${TEMPDIR}
+        # Archlinux style, except that we are not in a fakeroot env
+        ${CMD} install -Dm755 binstub ${DESTDIR}/binstub
+        ${CMD} install -Dm755 stub.bash ${DESTDIR}/stub.bash
+        echo "Bats Mock v$VERSION installed in $DESTDIR"
+        echo "mock-installed=true" >> "$GITHUB_OUTPUT"
+        # Cleanup bats-support if required
+        [[ "${{ inputs.mock-clean }}" = "true"  ]] && rm -rf ${TEMPDIR} || exit 0
+
     - name: "Debug print if installed"
       if: runner.debug == '1'
       shell: bash
@@ -289,3 +339,4 @@ runs:
         echo "Assert installed: ${{ (steps.assert-install.outputs.assert-installed != '') }}"
         echo "Detik installed: ${{ (steps.detik-install.outputs.detik-installed != '') }}"
         echo "File installed: ${{ (steps.file-install.outputs.file-installed != '') }}"
+        echo "Mock installed: ${{ (steps.mock-install.outputs.mock-installed != '') }}"

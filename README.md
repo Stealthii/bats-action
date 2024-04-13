@@ -1,11 +1,12 @@
 # Setup Bats and Bats libraries
 
-This GitHub Action installs [Bats](https://github.com/bats-core/bats-core) and the four major bats libraries:
+This GitHub Action installs [Bats](https://github.com/bats-core/bats-core) and the five major bats libraries:
 
 * [bats-support](https://github.com/bats-core/bats-support)
 * [bats-assert](https://github.com/bats-core/bats-assert)
 * [bats-detik](https://github.com/bats-core/bats-detik)
 * [bats-file](https://github.com/bats-core/bats-file)
+* [bats-mock](https://github.com/buildkite-plugins/bats-mock)
 
 The action can be also instructed to select which libraries to install.
 
@@ -66,6 +67,10 @@ The caching mechanism for the `bats binary` is always available. However, the ca
 | file-version     | `0.4.0`   | false    | Bats-file version            |
 | file-path        | `/usr/lib/bats-file` | false | Bats-file path   |
 | file-clean       | `true`    | false    | Bats-file: clean temp files                     |
+| mock-install     | `true`    | false    | Bats-mock installation     |
+| mock-version     | `2.1.1`   | false    | Bats-mock version            |
+| mock-path        | `/usr/lib/bats-mock` | false | Bats-mock path   |
+| mock-clean       | `true`    | false    | Bats-mock: clean temp mocks                     |
 
 ## Outputs
 
@@ -76,3 +81,4 @@ The caching mechanism for the `bats binary` is always available. However, the ca
 | assert-installed | True/False if bats-assert has been installed   |
 | detik-installed  | True/False if bats-detik has been installed    |
 | file-installed   | True/False if bats-file has been installed     |
+| mock-installed   | True/False if bats-mock has been installed     |
